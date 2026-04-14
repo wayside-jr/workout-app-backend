@@ -1,6 +1,8 @@
 from flask import Flask , jsonify
+from flask_migrate import Migrate
 
 app = Flask(__name__)
+migrate = Migrate(app)
 
 @app.route("/")
 def index():
