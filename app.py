@@ -72,6 +72,15 @@ def get_workout(id):
         "description": workout.description,
         "exercises": exercises
     })
+# delete workout 
+@app.route("/workouts/<int:id>", methods=["DELETE"])
+def delete_workout(id):
+    workout = Workout.query.get_or_404(id)
+
+    db.session.delete(workout)
+    db.session.commit()
+
+    return jsonify({"message": "Workout deleted"})
 
 
 
