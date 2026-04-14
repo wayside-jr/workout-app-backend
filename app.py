@@ -99,6 +99,22 @@ def create_exercise():
     return jsonify({"message": "Exercise created", "id": exercise.id}), 201
 
 
+# get all exercises
+@app.route("/exercises", methods=["GET"])
+def get_exercises():
+    exercises = Exercise.query.all()
+
+    result = []
+    for e in exercises:
+        result.append({
+            "id": e.id,
+            "name": e.name,
+            "muscle_group": e.muscle_group,
+            "equipment": e.equipment
+        })
+
+    return jsonify(result)
+
 
 
 
