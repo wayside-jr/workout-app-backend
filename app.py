@@ -138,6 +138,27 @@ def delete_exercise(id):
     return jsonify({"message": "Exercise deleted"})
 
 
+# add exercise to workouts
+@app.route("/workouts/<int:workout_id>/add-exercise", methods=["POST"])
+def add_exercise_to_workout(workout_id):
+    data = request.get_json()
+
+    workout = Workout.query.get_or_404(workout_id)
+    exercise = Exercise.query.get_or_404(data.get("exercise_id"))
+
+    workout_exercise = WorkoutExercise(
+        workout_id=workout.id,
+        exercise_id=exercise.id,
+        sets=data.get("sets"),
+        reps=data.get("reps"),
+        duration=data.get("duration")
+    )
+
+    db.session.add(workout_exercise)
+    db.session.commit()
+
+    return jsonify({"message": "Exercise added to workout"}), 201
+
 
 
 
