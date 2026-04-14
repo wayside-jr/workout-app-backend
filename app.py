@@ -1,14 +1,12 @@
 from flask import Flask, jsonify, request
 from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
 from marshmallow import ValidationError
+from sqlalchemy.exc import IntegrityError
+
 from models import db, Workout, Exercise, WorkoutExercise
 from schema import ExerciseSchema, WorkoutSchema, WorkoutExerciseSchema
-import os
 
 app = Flask(__name__)
-
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 # =====================
 # CONFIG
@@ -31,13 +29,11 @@ workouts_schema = WorkoutSchema(many=True)
 workout_exercise_schema = WorkoutExerciseSchema()
 
 # =====================
-# ERROR HANDLER (VALIDATION)
+# ERROR HANDLING
 # =====================
 @app.errorhandler(ValidationError)
 def handle_validation_error(err):
-    return jsonify({
-        "errors": err.messages
-    }), 400
+    return jsonify({"errors": err.messages}), 400
 
 
 # =====================
@@ -45,23 +41,21 @@ def handle_validation_error(err):
 # =====================
 @app.route("/")
 def index():
-    return jsonify({"message": "Your Workout app is running"})
+    return jsonify({"message": "Workout API running"})
 
 
 # =====================
-# WORKOUT ROUTES
+# WORKOUTS
 # =====================
 
-# CREATE WORKOUT (WITH VALIDATION)
 @app.route("/workouts", methods=["POST"])
 def create_workout():
     data = request.get_json()
-
-    validated_data = workout_schema.load(data)
+    validated = workout_schema.load(data)
 
     workout = Workout(
-        title=validated_data["title"],
-        description=validated_data.get("description")
+        title=validated["title"],
+        description=validated.get("description")
     )
 
     db.session.add(workout)
@@ -70,21 +64,18 @@ def create_workout():
     return workout_schema.dump(workout), 201
 
 
-# GET ALL WORKOUTS
 @app.route("/workouts", methods=["GET"])
 def get_workouts():
     workouts = Workout.query.all()
     return workouts_schema.dump(workouts), 200
 
 
-# GET SINGLE WORKOUT
 @app.route("/workouts/<int:id>", methods=["GET"])
 def get_workout(id):
     workout = Workout.query.get_or_404(id)
     return workout_schema.dump(workout), 200
 
 
-# DELETE WORKOUT
 @app.route("/workouts/<int:id>", methods=["DELETE"])
 def delete_workout(id):
     workout = Workout.query.get_or_404(id)
@@ -96,43 +87,48 @@ def delete_workout(id):
 
 
 # =====================
-# EXERCISE ROUTES
+# EXERCISES
 # =====================
 
-# CREATE EXERCISE (WITH VALIDATION)
 @app.route("/exercises", methods=["POST"])
 def create_exercise():
     data = request.get_json()
+    validated = exercise_schema.load(data)
 
-    validated_data = exercise_schema.load(data)
+    # FIX: prevent duplicate crash
+    existing = Exercise.query.filter_by(name=validated["name"]).first()
+    if existing:
+        return jsonify({"error": "Exercise already exists"}), 400
 
     exercise = Exercise(
-        name=validated_data["name"],
-        muscle_group=validated_data["muscle_group"],
-        equipment=validated_data.get("equipment")
+        name=validated["name"],
+        muscle_group=validated["muscle_group"],
+        equipment=validated.get("equipment")
     )
 
     db.session.add(exercise)
-    db.session.commit()
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "Database error"}), 400
 
     return exercise_schema.dump(exercise), 201
 
 
-# GET ALL EXERCISES
 @app.route("/exercises", methods=["GET"])
 def get_exercises():
     exercises = Exercise.query.all()
     return exercises_schema.dump(exercises), 200
 
 
-# GET SINGLE EXERCISE
 @app.route("/exercises/<int:id>", methods=["GET"])
 def get_exercise(id):
     exercise = Exercise.query.get_or_404(id)
     return exercise_schema.dump(exercise), 200
 
 
-# DELETE EXERCISE
 @app.route("/exercises/<int:id>", methods=["DELETE"])
 def delete_exercise(id):
     exercise = Exercise.query.get_or_404(id)
@@ -150,17 +146,16 @@ def delete_exercise(id):
 @app.route("/workouts/<int:workout_id>/add-exercise", methods=["POST"])
 def add_exercise_to_workout(workout_id):
     data = request.get_json()
-
-    validated_data = workout_exercise_schema.load(data)
+    validated = workout_exercise_schema.load(data)
 
     workout = Workout.query.get_or_404(workout_id)
-    exercise = Exercise.query.get_or_404(validated_data["exercise_id"])
+    exercise = Exercise.query.get_or_404(validated["exercise_id"])
 
     workout_exercise = WorkoutExercise(
         workout_id=workout.id,
         exercise_id=exercise.id,
-        sets=validated_data["sets"],
-        reps=validated_data["reps"]
+        sets=validated["sets"],
+        reps=validated["reps"]
     )
 
     db.session.add(workout_exercise)
@@ -170,7 +165,7 @@ def add_exercise_to_workout(workout_id):
 
 
 # =====================
-# RUN APP
+# RUN
 # =====================
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
