@@ -65,7 +65,7 @@ class WorkoutExercise(db.Model):
 
     sets = db.Column(db.Integer, nullable=False, default=1)
     reps = db.Column(db.Integer)
-    duration = db.Column(db.Integer) 
+     
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
