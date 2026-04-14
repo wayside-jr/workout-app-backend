@@ -82,6 +82,24 @@ def delete_workout(id):
 
     return jsonify({"message": "Workout deleted"})
 
+# create exercise
+@app.route("/exercises", methods=["POST"])
+def create_exercise():
+    data = request.get_json()
+
+    exercise = Exercise(
+        name=data.get("name"),
+        muscle_group=data.get("muscle_group"),
+        equipment=data.get("equipment")
+    )
+
+    db.session.add(exercise)
+    db.session.commit()
+
+    return jsonify({"message": "Exercise created", "id": exercise.id}), 201
+
+
+
 
 
 
