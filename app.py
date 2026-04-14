@@ -36,6 +36,22 @@ def create_workout():
 
     return jsonify({"message": "Workout created", "id": workout.id}), 201
 
+# get all workout
+@app.route("/workouts", methods=["GET"])
+def get_workouts():
+    workouts = Workout.query.all()
+
+    result = []
+    for w in workouts:
+        result.append({
+            "id": w.id,
+            "title": w.title,
+            "description": w.description
+        })
+
+    return jsonify(result)
+
+
 
 
 if __name__ == "__main__":
