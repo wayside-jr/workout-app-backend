@@ -127,6 +127,17 @@ def get_exercise(id):
         "equipment": e.equipment
     })
 
+# Delete exercise
+@app.route("/exercises/<int:id>", methods=["DELETE"])
+def delete_exercise(id):
+    e = Exercise.query.get_or_404(id)
+
+    db.session.delete(e)
+    db.session.commit()
+
+    return jsonify({"message": "Exercise deleted"})
+
+
 
 
 
