@@ -115,6 +115,18 @@ def get_exercises():
 
     return jsonify(result)
 
+# get one exercise 
+@app.route("/exercises/<int:id>", methods=["GET"])
+def get_exercise(id):
+    e = Exercise.query.get_or_404(id)
+
+    return jsonify({
+        "id": e.id,
+        "name": e.name,
+        "muscle_group": e.muscle_group,
+        "equipment": e.equipment
+    })
+
 
 
 
