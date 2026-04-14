@@ -51,6 +51,28 @@ def get_workouts():
 
     return jsonify(result)
 
+# get one workout
+@app.route("/workouts/<int:id>", methods=["GET"])
+def get_workout(id):
+    workout = Workout.query.get_or_404(id)
+
+    exercises = []
+    for we in workout.workout_exercises:
+        exercises.append({
+            "exercise_id": we.exercise.id,
+            "name": we.exercise.name,
+            "sets": we.sets,
+            "reps": we.reps,
+            "duration": we.duration
+        })
+
+    return jsonify({
+        "id": workout.id,
+        "title": workout.title,
+        "description": workout.description,
+        "exercises": exercises
+    })
+
 
 
 
