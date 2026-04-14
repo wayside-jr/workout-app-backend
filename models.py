@@ -46,3 +46,32 @@ class Exercise(db.Model):
 
 
 
+class WorkoutExercise(db.Model):
+    __tablename__ = "workout_exercises"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    workout_id = db.Column(
+        db.Integer,
+        db.ForeignKey("workouts.id"),
+        nullable=False
+    )
+
+    exercise_id = db.Column(
+        db.Integer,
+        db.ForeignKey("exercises.id"),
+        nullable=False
+    )
+
+    sets = db.Column(db.Integer, nullable=False, default=1)
+    reps = db.Column(db.Integer)
+    duration = db.Column(db.Integer) 
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # relationships
+    workout = db.relationship("Workout", back_populates="workout_exercises")
+    exercise = db.relationship("Exercise", back_populates="workout_exercises")
+
+    def __repr__(self):
+        return f"<WorkoutExercise W{self.workout_id}-E{self.exercise_id}>"
